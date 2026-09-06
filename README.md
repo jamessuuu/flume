@@ -2,13 +2,13 @@
 
 A small event-time stream processor. Every event carries the time it *happened*,
 distinct from the time it *arrived*. Windows close when a watermark over event
-time passes them — never on a wall clock — and late data is handled by a policy
+time passes them - never on a wall clock - and late data is handled by a policy
 you choose and the checker can audit.
 
 The watermark, the trigger, the allowed-lateness bound and the retracted pane are
 the Dataflow model's: **Akidau et al., *The Dataflow Model*, VLDB 2015**. flume is
 a single-process reading of those semantics small enough to watch and check. It
-is not Flink, not Beam, and not Kafka Streams — see the scope cut.
+is not Flink, not Beam, and not Kafka Streams - see the scope cut.
 
 **Every window comes back as one of three things, never two:** `complete`,
 `revised`, or `unverifiable` with the reason printed.
@@ -46,7 +46,7 @@ npm ci        # devDeps are TypeScript and node types; flume has no runtime deps
 npm run demo  # nineteen events, two clocks, all three outcomes
 ```
 
-Or open `web/index.html` in a browser. It is a static page — no server, no build,
+Or open `web/index.html` in a browser. It is a static page - no server, no build,
 no dataset to download, no credentials. The default view shows a late event, so
 the idea is on the first screen.
 
@@ -90,12 +90,12 @@ $ node src/cli.js demo
 
 Row 9 carries an event time of +3.0s. Its window had already closed and reported
 4. Allowed lateness is 6s and the state was still there, so the engine retracted
-4 and emitted 5. **That window is `revised`, not `complete`** — the distinction
+4 and emitted 5. **That window is `revised`, not `complete`** - the distinction
 the checker exists to keep.
 
 Row 18 carries +6.0s, and by then the state of its window had been released. It
 is not dropped: it goes to the side output carrying its reason, and its window is
-`unverifiable`. The last window is `unverifiable` too, for the *other* reason —
+`unverifiable`. The last window is `unverifiable` too, for the *other* reason  - 
 the log ended before the watermark reached it. One outcome, two reasons, and the
 report says which.
 
@@ -115,7 +115,7 @@ compared against that number.
 A **finding** is a different thing from an outcome. An outcome describes a
 window; a finding is an accusation against the *engine*. A window whose value is
 unknown because the configured bound was four orders of magnitude too small for
-the stream is `unverifiable` with a reason — the engine did what it was told.
+the stream is `unverifiable` with a reason - the engine did what it was told.
 Keeping those two apart is not a stylistic choice; it is what the three real
 streams below forced.
 
@@ -144,7 +144,7 @@ usgs -- USGS earthquake catalogue
   lateness p50 10.7h  p90 3.6d  p99 12.8d  max 15.3d
 ```
 
-Maximum lateness spans **1.8 minutes to 15.3 days** across the three — four
+Maximum lateness spans **1.8 minutes to 15.3 days** across the three - four
 orders of magnitude. That spread is the point. A watermark tuned on one of these
 misfires on another, and the misfire is the finding.
 
@@ -156,15 +156,15 @@ nine runs. Every one was a false positive, and each had a distinct mechanism:
 
 | retired finding | count | why it was wrong |
 |---|---:|---|
-| `no-pane-after-close` | 81 | Fires when the watermark passed a window's end but no pane was emitted. On USGS with an hour bound, 38 windows had *every one* of their events arrive after the state was released — so no state was ever created, and all of them were receipted to the side output. Nothing was lost and nothing was silent. The bound was too small; the engine was fine. |
+| `no-pane-after-close` | 81 | Fires when the watermark passed a window's end but no pane was emitted. On USGS with an hour bound, 38 windows had *every one* of their events arrive after the state was released - so no state was ever created, and all of them were receipted to the side output. Nothing was lost and nothing was silent. The bound was too small; the engine was fine. |
 | `unrevised-late` | 40 | Fires when a window has in-bound late data under the `update` policy but only one pane. USGS has 36 windows whose *first* event arrived after the watermark had already passed their end; on the 20 of those that received exactly one late event, one pane is the correct answer, because that pane **is** the close. 20 windows × 2 fixed-bound configurations = 40. The check was wrong, not the engine. |
-| `watermark-regression` | 3 | Fires when the raw watermark falls. For a fixed bound that is impossible, so it means a bug. For the **adaptive** percentile strategy the raw value falls every time the sliding sample forgets an outlier — 4,295 times on USGS alone. That is the strategy working as designed. |
+| `watermark-regression` | 3 | Fires when the raw watermark falls. For a fixed bound that is impossible, so it means a bug. For the **adaptive** percentile strategy the raw value falls every time the sliding sample forgets an outlier - 4,295 times on USGS alone. That is the strategy working as designed. |
 | **total** | **124** | |
 
-After the fix — reclassify a fully receipted window as `unverifiable /
+After the fix - reclassify a fully receipted window as `unverifiable /
 lateness-bound-exceeded`, replace the pane heuristic with an exact identity
 (`panes === 1 + lateInBound`, or `=== lateInBound` for a window opened after its
-close), and only accuse a strategy that *declared* `monotonicByConstruction` —
+close), and only accuse a strategy that *declared* `monotonicByConstruction`  - 
 the same nine runs produce nothing at all:
 
 ```
@@ -179,7 +179,7 @@ retired conditions from the shipped results and asserts they still total exactly
 happen; the underlying counts are in `vendor/MEASURED.json`, regenerated and
 compared by the same test.
 
-Removing those three false positives also silenced a **true** positive — the
+Removing those three false positives also silenced a **true** positive - the
 `processing-time-watermark` fixture had been caught by `no-pane-after-close`, and
 after the fix it produced nothing. The replacement is structural rather than
 statistical:
@@ -188,8 +188,8 @@ statistical:
 > non-negative bound, so it can never rise above the highest event time yet seen.
 > One that does is not a function of the data.
 
-That is `watermark-overshoot`, and it is exact. The statistical alternative — a
-threshold on the rate of late events — would have fired here *and* on a correctly
+That is `watermark-overshoot`, and it is exact. The statistical alternative - a
+threshold on the rate of late events - would have fired here *and* on a correctly
 implemented bound that is simply too small for its stream, which is precisely the
 confusion the other 124 findings were made of.
 
@@ -197,7 +197,7 @@ confusion the other 124 findings were made of.
 
 `bounded` emits `maxSeen - bound - 1`, not `maxSeen - bound`. The `-1` is for the
 inclusive boundary: with a bound of 0, an event at time T would otherwise assert
-that nothing at time T can arrive again — but simultaneous events are exactly
+that nothing at time T can arrive again - but simultaneous events are exactly
 what a second-resolution timestamp produces in bulk. Apache Flink's
 `BoundedOutOfOrdernessWatermarks` subtracts the same 1.
 
@@ -210,7 +210,7 @@ rather than asserted. At bound 0:
 | wikimedia | 48.08 | **284** |
 | usgs | 1.00 | **0** |
 
-USGS timestamps are unique to the millisecond, so the two forms agree exactly —
+USGS timestamps are unique to the millisecond, so the two forms agree exactly  - 
 which is the control that shows the effect is the collision and not something
 else. On Wikimedia, 284 events out of 5,000 are misclassified as late by a
 watermark that is otherwise correct.
@@ -238,7 +238,7 @@ Negative control: 400 executions of a perfectly ordered, zero-lateness stream
 **The sabotaged checker is the one that matters.** The other three prove the
 checker *fires*; they say nothing about the `complete`/`revised` distinction
 being real, because a checker that called every window `complete` would still
-have caught all three — they appear as findings, not as outcomes.
+have caught all three - they appear as findings, not as outcomes.
 `checker-revised-as-complete` reports a window it knows was corrected as having
 been right the first time. With it on, every revision disappears into the
 `complete` column, including on real Wikimedia data. That is the exact lie a
@@ -246,7 +246,7 @@ streaming report is most likely to tell and the one nobody downstream can detect
 (`test/sabotage.test.js`).
 
 **The negative control** is 400 executions of a perfectly ordered stream with
-*exactly* zero lateness — by construction, not by a small probability. Zero
+*exactly* zero lateness - by construction, not by a small probability. Zero
 revisions, zero unknowns, zero findings. Without it, "the checker found bugs" is
 indistinguishable from "the checker fires at random".
 
@@ -270,35 +270,35 @@ makes you pick.
 - **The fixture stream was too tidy to break anything.** The first synthetic
   generator laid event times on an exact grid. On a grid the arrival index and
   the event time advance in lockstep, which makes a *processing-time* watermark
-  accidentally correct — the most important fixture could not fire against it.
+  accidentally correct - the most important fixture could not fire against it.
   Event-time gaps are now exponential and the generator takes a burst, because a
   stream that never bursts is a stream that never had an upstream outage.
 
 ## What is actually in here
 
-**`src/core/engine.js`** — one pass over an event log. Windows are assigned by
+**`src/core/engine.js`** - one pass over an event log. Windows are assigned by
 event time; the engine's only notion of processing time is the position in the
 log. There is no `Date.now`, no `Math.random` and no `setTimeout` anywhere under
 `src/core`, and `test/determinism.test.js` fails the build if one appears. The
 same log replayed produces byte-identical output including the watermark trace.
 
-**`src/core/watermark.js`** — five strategies: `bounded`, `bounded-naive`,
+**`src/core/watermark.js`** - five strategies: `bounded`, `bounded-naive`,
 `percentile` (the bound is the p99 of observed lateness rather than a constant
 somebody guessed), `punctuated`, and `processing-time`, which is a planted
 fixture and not a strategy anyone should choose. Each declares whether its raw
 output is monotonic by construction, because that is what decides whether a
 falling watermark is a bug or a design.
 
-**`src/core/oracle.js`** — the batch ground truth, deliberately trivial. A ground
+**`src/core/oracle.js`** - the batch ground truth, deliberately trivial. A ground
 truth complex enough to be wrong would not be one. It shares exactly one function
 with the engine (`assignWindow`), and `test/window.test.js` checks that function
 against hand-computed boundaries so the two cannot be wrong together.
 
-**`src/core/checker.js`** — the three outcomes, the reasons, and seven finding
+**`src/core/checker.js`** - the three outcomes, the reasons, and seven finding
 codes. `tools/lint.mjs` fails the build if a finding is emitted without
 documentation or documented without being reachable.
 
-**`vendor/`** — the three real slices, each with a `SOURCE.md` stating the exact
+**`vendor/`** - the three real slices, each with a `SOURCE.md` stating the exact
 URL, what was taken, why the arrival order is what it is, and the licence
 position. Only two timestamps and a low-cardinality label are vendored per event:
 no titles, usernames, repository names, comments, payloads or coordinates.
@@ -337,7 +337,7 @@ no titles, usernames, repository names, comments, payloads or coordinates.
 - A `bounded` watermark with a bound smaller than the stream's real lateness
   turns most windows `unverifiable`. That is the contract working, but it does
   mean flume cannot give you a number for every window of every stream.
-- The `percentile` strategy still misses the tail by construction — that is what
+- The `percentile` strategy still misses the tail by construction - that is what
   choosing a percentile means. On USGS at p99 it leaves 354 of 398 windows
   unverifiable, most of them because the watermark never got there at all.
 - Both second-resolution sources (GH Archive, Wikimedia) put ~40-48 events on
@@ -348,16 +348,16 @@ no titles, usernames, repository names, comments, payloads or coordinates.
   suppressed above 60 panes because they become a hatch pattern.
 - Opened from a `file://` URL the page works, but it cannot write the
   configuration into the address bar: a browser refuses `history.replaceState`
-  on an opaque origin. The controls still apply — the state is held in the page,
-  not re-read from the URL — but a view is only a shareable link when the page is
+  on an opaque origin. The controls still apply - the state is held in the page,
+  not re-read from the URL - but a view is only a shareable link when the page is
   served over http(s). Verified served; the `file://` behaviour is the documented
   browser rule, not something measured here.
 - The demo page's default log pins its window size and allowed lateness. The
   policy, termination and watermark controls apply to it, but changing the window
   would break the nineteen-row story, so those two fields are ignored on that one
   source and honoured everywhere else.
-- `flume run --build <flag>` exits 1 when findings appear. That is intended — a
-  finding is a failure — but it means the planted builds cannot be used in a
+- `flume run --build <flag>` exits 1 when findings appear. That is intended - a
+  finding is a failure - but it means the planted builds cannot be used in a
   pipeline that treats exit 0 as "ran".
 
 ## Commands
@@ -426,13 +426,13 @@ support, and 22 is the oldest version this has actually been exercised on.
 pinned Node 22.14.0 and runs lint, typecheck, bundle freshness, measurement
 freshness, the full suite, the fixtures, the streams and the demo on Linux, then
 the suite again on Windows (flume is developed on Windows and its module
-resolution depends on `pathToFileURL`). It has **never run** — this repository
+resolution depends on `pathToFileURL`). It has **never run** - this repository
 has not been pushed to a remote, so there is no green badge and this README will
 not imply one. What has been verified is the equivalent locally, from a fresh
 `git clone` into an empty directory followed by `npm ci`: lint clean, typecheck
 clean, bundle fresh, measurements fresh, 96/96 tests, all fixtures firing,
 negative control clean. That clean-clone run is what proves the `.gitattributes`
-line-ending rules hold — the vendored NDJSON and the generated bundle are both
+line-ending rules hold - the vendored NDJSON and the generated bundle are both
 compared byte for byte, and a checkout that translated line endings would fail
 both.
 
@@ -453,24 +453,24 @@ slices in this repository are the ones every number above was measured against.
 
 ## Credits and licence
 
-flume is MIT licensed — see [LICENSE](LICENSE).
+flume is MIT licensed - see [LICENSE](LICENSE).
 
-- **The Dataflow model** — Akidau, Bradshaw, Chambers, Chernyak, Fernández-Moctezuma,
+- **The Dataflow model** - Akidau, Bradshaw, Chambers, Chernyak, Fernández-Moctezuma,
   Lax, McVeety, Mills, Perry, Schmidt, Whittle, *The Dataflow Model: A Practical
   Approach to Balancing Correctness, Latency, and Cost in Massive-Scale, Unbounded,
   Out-of-Order Data Processing*, PVLDB 8(12), 2015. Watermarks, triggers, allowed
   lateness and accumulation modes are theirs; the implementation and its mistakes
   are mine.
-- **Apache Flink** — the inclusive-boundary `-1` in `bounded` follows
+- **Apache Flink** - the inclusive-boundary `-1` in `bounded` follows
   `BoundedOutOfOrdernessWatermarks`.
-- **GH Archive** — `vendor/gharchive/`. The GH Archive project is MIT licensed
+- **GH Archive** - `vendor/gharchive/`. The GH Archive project is MIT licensed
   (© 2012-2016 Ilya Grigorik); it republishes GitHub's public events timeline,
   for which no separate data licence is stated. Only derived timestamps and the
   event-type enum are vendored. See `vendor/gharchive/SOURCE.md`.
-- **Wikimedia Foundation EventStreams** — `vendor/wikimedia/`. Wikimedia project
+- **Wikimedia Foundation EventStreams** - `vendor/wikimedia/`. Wikimedia project
   content is CC BY-SA 4.0; **no content is vendored**, only per-event timestamps
   and the wiki's domain name. See `vendor/wikimedia/SOURCE.md`.
-- **U.S. Geological Survey earthquake feed** — `vendor/usgs/`. A work of the U.S.
+- **U.S. Geological Survey earthquake feed** - `vendor/usgs/`. A work of the U.S.
   federal government, not subject to copyright in the United States
   (17 U.S.C. § 105). The feed's documentation states no separate licence, and the
   USGS copyright page returned HTTP 403 to a scripted request on 2026-09-06, so

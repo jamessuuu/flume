@@ -58,9 +58,9 @@ async function fetchGharchive() {
     const o = JSON.parse(line);
     return { t: Date.parse(o.created_at), p: null, k: String(o.type) };
   });
-  writeStream('gharchive', rows, `# GH Archive — 5,000 GitHub public events
+  writeStream('gharchive', rows, `# GH Archive - 5,000 GitHub public events
 
-**Source.** \`https://data.gharchive.org/${GHARCHIVE_HOUR}.json.gz\` — the GH
+**Source.** \`https://data.gharchive.org/${GHARCHIVE_HOUR}.json.gz\` - the GH
 Archive hourly file for ${GHARCHIVE_HOUR.slice(0, 10)} 03:00 UTC, downloaded
 2026-09-06. The full hour holds 141,671 events; this is the first 5,000 lines of
 the file, a contiguous slice in the file's own order.
@@ -80,7 +80,7 @@ Grigorik; \`https://github.com/igrigorik/gharchive.org/blob/master/LICENSE.md\`,
 retrieved 2026-09-06). The archive republishes GitHub's public events timeline;
 neither gharchive.org nor its repository states a separate licence for the data
 itself. flume therefore vendors only two derived timestamps and a schema enum
-per event — facts about when things happened, not the content of anything
+per event - facts about when things happened, not the content of anything
 anybody wrote.
 `);
 }
@@ -102,16 +102,16 @@ async function fetchUsgs() {
   // feed. Sorting by it reconstructs the stream a consumer would have seen.
   all.sort((/** @type {any} */ a, /** @type {any} */ b) => (a.p - b.p) || (a.t - b.t));
   const rows = all.slice(0, SLICE);
-  writeStream('usgs', rows, `# USGS earthquakes — 5,000 catalogue records
+  writeStream('usgs', rows, `# USGS earthquakes - 5,000 catalogue records
 
 **Source.** \`https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson\`
-— the USGS "All Earthquakes, Past Month" GeoJSON summary feed, downloaded
+ -  the USGS "All Earthquakes, Past Month" GeoJSON summary feed, downloaded
 2026-09-06 (${geo.features.length} features in that snapshot). This is the first
 5,000 records in \`updated\` order.
 
 **Why \`updated\` is the processing time.** Every record carries \`time\` (when
-the earthquake happened — the event time) and \`updated\` (when the record was
-last modified in the catalogue — when a consumer of the feed would have seen this
+the earthquake happened - the event time) and \`updated\` (when the record was
+last modified in the catalogue - when a consumer of the feed would have seen this
 version). Sorting by \`updated\` reconstructs the order a feed consumer observed.
 Both timestamps are the source's own; neither is synthesised here. This is the
 one stream of the three where event time and processing time are separately
@@ -174,9 +174,9 @@ async function fetchWikimedia() {
     }
   }
   controller.abort();
-  writeStream('wikimedia', rows, `# Wikimedia EventStreams — 5,000 recent changes
+  writeStream('wikimedia', rows, `# Wikimedia EventStreams - 5,000 recent changes
 
-**Source.** \`https://stream.wikimedia.org/v2/stream/recentchange\` — the
+**Source.** \`https://stream.wikimedia.org/v2/stream/recentchange\` - the
 Wikimedia Foundation's public \`mediawiki.recentchange\` event stream, captured
 2026-09-06 from ${firstDt} to ${lastDt} UTC. This is a live stream, so re-running
 \`tools/fetch-streams.mjs\` captures a different (equally valid) window; the
@@ -184,15 +184,15 @@ capture in this repository is the one every number in the README was measured
 against.
 
 **Why \`meta.dt\` is the processing time.** Each event carries \`timestamp\`
-(when the edit was recorded on the wiki, one-second resolution — the event time)
+(when the edit was recorded on the wiki, one-second resolution - the event time)
 and \`meta.dt\` (when the event was emitted onto the stream, millisecond
-resolution — when a consumer saw it). Arrival order is capture order, which is
+resolution - when a consumer saw it). Arrival order is capture order, which is
 the order the stream delivered them.
 
 **What is vendored.** Per event: \`t\` (\`timestamp\` x 1000), \`p\`
 (\`meta.dt\` parsed to epoch ms), and \`k\` (\`server_name\`, e.g.
 \`en.wikipedia.org\`). No titles, no user names, no comments, no revision ids, no
-edit summaries — nothing from the edits themselves.
+edit summaries - nothing from the edits themselves.
 
 **Licence.** Wikimedia project content is licensed CC BY-SA 4.0 (and in places
 GFDL) per the Wikimedia Foundation Terms of Use. flume vendors no content: only

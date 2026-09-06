@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>flume — event time, processing time, and the line between them</title>
+<title>flume - event time, processing time, and the line between them</title>
 <meta name="description" content="A small event-time stream processor. Windows close on watermarks, not clocks. Late data is handled by an explicit policy, and every window comes back complete, revised, or unverifiable.">
 <style>
   :root {
@@ -113,7 +113,7 @@
   <p class="tagline">
     Every event here carries two times: when it <em>happened</em>, and when it
     <em>arrived</em>. Windows close on a watermark over the first, never on a clock
-    over the second — and the picture below is what that difference looks like.
+    over the second - and the picture below is what that difference looks like.
   </p>
   <p class="credit">
     The watermark, the trigger, the allowed-lateness bound and the retracted pane
@@ -163,8 +163,8 @@
 </form>
 <p class="small muted">
   Every control is in the URL, so any view you reach is a link you can send. The
-  demo log pins its window size and allowed lateness — those two are what make
-  nineteen rows tell the story — but the policy, the termination and the
+  demo log pins its window size and allowed lateness - those two are what make
+  nineteen rows tell the story - but the policy, the termination and the
   watermark strategy apply to every stream.
   <strong>processing-time</strong> is one of the planted bugs, and it needs a
   stream whose arrival rate diverges from its event rate before it does any
@@ -186,7 +186,7 @@
   <p>
     <strong>Every dot to the left of that line arrived late.</strong> That is not a
     definition to memorise; it is a region of the plane. A dot inside the allowed
-    lateness makes its window emit a corrected pane — the window is
+    lateness makes its window emit a corrected pane - the window is
     <em>revised</em>, and the row shows the old value it retracted. A dot past the
     bound cannot: its window’s state is gone, so the event goes to the side output
     carrying its reason, and the window becomes <em>unverifiable</em>.
@@ -196,14 +196,14 @@
 <section>
   <h2>Three outcomes, never two</h2>
   <ul>
-    <li><strong>complete</strong> — the watermark closed it, and the emitted value equals what a batch recomputation over the whole log says. Nothing arriving later changed it.</li>
-    <li><strong>revised</strong> — late data inside the bound corrected an already-emitted pane. The final value is right; it was not right the first time, and the report refuses to blur those two.</li>
-    <li><strong>unverifiable</strong> — the emitted panes cannot be shown to be right, for one of two stated reasons: the watermark never reached the window (the log ended first), or data arrived past the allowed lateness. Both are printed; neither is rounded to “fine”.</li>
+    <li><strong>complete</strong> - the watermark closed it, and the emitted value equals what a batch recomputation over the whole log says. Nothing arriving later changed it.</li>
+    <li><strong>revised</strong> - late data inside the bound corrected an already-emitted pane. The final value is right; it was not right the first time, and the report refuses to blur those two.</li>
+    <li><strong>unverifiable</strong> - the emitted panes cannot be shown to be right, for one of two stated reasons: the watermark never reached the window (the log ended first), or data arrived past the allowed lateness. Both are printed; neither is rounded to “fine”.</li>
   </ul>
   <p class="small muted">
     Switch the stream to <em>USGS earthquakes</em> to watch a bound that is fine for
     one stream fail on another. That catalogue revises records for weeks, so a
-    watermark bound measured in seconds turns almost every window unverifiable —
+    watermark bound measured in seconds turns almost every window unverifiable  - 
     with a receipt for every event, and no accusation against the engine, because
     the engine did exactly what it was configured to do.
   </p>

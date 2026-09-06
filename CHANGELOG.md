@@ -4,7 +4,7 @@ All notable changes to this project are recorded here. Versions follow
 [semantic versioning](https://semver.org/). The version reflects what has
 actually shipped, not what would look mature.
 
-## 0.1.0 — 2026-09-06
+## 0.1.0 - 2026-09-06
 
 First release. Everything below was measured on the day it was written; the
 commands that reproduce each number are in the README.
@@ -14,7 +14,7 @@ commands that reproduce each number are in the README.
 - **Event-time windowing engine** (`src/core/engine.js`). Tumbling windows
   assigned by event time, fired by a watermark, held for a configurable allowed
   lateness, then released. The engine's only notion of processing time is the
-  position in the log — no `Date.now`, no `Math.random`, no `setTimeout` anywhere
+  position in the log - no `Date.now`, no `Math.random`, no `setTimeout` anywhere
   under `src/core`, enforced by a test rather than by convention. Replaying a log
   produces byte-identical output including the watermark trace.
 - **Five watermark strategies** (`src/core/watermark.js`): `bounded`,
@@ -31,8 +31,8 @@ commands that reproduce each number are in the README.
   stream that continues, so the trailing windows are genuinely unknown).
 - **Batch oracle** (`src/core/oracle.js`): the ground truth every streamed
   result is compared against, sharing exactly one function with the engine.
-- **Checker** (`src/core/checker.js`) with three outcomes — `complete`,
-  `revised`, `unverifiable` (with a stated reason) — and seven finding codes that
+- **Checker** (`src/core/checker.js`) with three outcomes - `complete`,
+  `revised`, `unverifiable` (with a stated reason) - and seven finding codes that
   accuse the engine rather than describe a window.
 - **Three vendored real streams** with genuinely different lateness: GH Archive
   GitHub events (max 1.8 min), Wikimedia EventStreams recent changes (max 22 s),
@@ -40,7 +40,7 @@ commands that reproduce each number are in the README.
   stating the exact URL, what was taken, and its licence position. Only two
   timestamps and a low-cardinality label are vendored per event.
 - **Four planted fixtures** (`src/bugs.js`): `processing-time-watermark`,
-  `close-without-lateness`, `silent-drop`, and `checker-revised-as-complete` —
+  `close-without-lateness`, `silent-drop`, and `checker-revised-as-complete`  - 
   the last of which breaks the checker itself so the `complete`/`revised`
   distinction can be watched to fail.
 - **Negative control**: 400 executions of a perfectly ordered, zero-lateness
@@ -65,7 +65,7 @@ commands that reproduce each number are in the README.
   whose events were all receipted to the side output; `unrevised-late` (40) fired
   on every window whose first event arrived after its own close, where one pane
   is the correct answer; `watermark-regression` (3) treated an adaptive bound's
-  shrinking sample as a bug. All three are now classified by what they are —
+  shrinking sample as a bug. All three are now classified by what they are  - 
   configuration, not defect. `test/streams.test.js` reconstructs the retired
   conditions and asserts they still total exactly 124, so the claim cannot decay
   into a memory.

@@ -1,13 +1,13 @@
-# USGS earthquakes — 5,000 catalogue records
+# USGS earthquakes - 5,000 catalogue records
 
 **Source.** `https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson`
-— the USGS "All Earthquakes, Past Month" GeoJSON summary feed, downloaded
+ -  the USGS "All Earthquakes, Past Month" GeoJSON summary feed, downloaded
 2026-09-06 (11142 features in that snapshot). This is the first
 5,000 records in `updated` order.
 
 **Why `updated` is the processing time.** Every record carries `time` (when
-the earthquake happened — the event time) and `updated` (when the record was
-last modified in the catalogue — when a consumer of the feed would have seen this
+the earthquake happened - the event time) and `updated` (when the record was
+last modified in the catalogue - when a consumer of the feed would have seen this
 version). Sorting by `updated` reconstructs the order a feed consumer observed.
 Both timestamps are the source's own; neither is synthesised here. This is the
 one stream of the three where event time and processing time are separately

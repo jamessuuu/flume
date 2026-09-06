@@ -297,7 +297,7 @@ function drawPlot(events, result, verdict) {
   yl.textContent = 'processing order ↓';
   root.append(yl);
   const note = svg('text', { x: pad.l + 8, y: H - pad.b - 8, class: 'regionlabel' });
-  note.textContent = 'the watermark has already declared this side finished — every dot here is late';
+  note.textContent = 'the watermark has already declared this side finished - every dot here is late';
   root.append(note);
   return root;
 }
@@ -404,7 +404,7 @@ function render() {
   host.append(drawVerdict(run.verdict));
   host.append(drawPlot(events, run.result, run.verdict));
   host.append(el('p', { class: 'legend small' }, [
-    el('span', { class: 'k k-wm', text: '—' }), ' the watermark  ',
+    el('span', { class: 'k k-wm', text: ' - ' }), ' the watermark  ',
     el('span', { class: 'k k-ev', text: '●' }), ' on time  ',
     el('span', { class: 'k k-late', text: '●' }), ' late, inside the bound (its window was revised)  ',
     el('span', { class: 'k k-toolate', text: '●' }), ' past the bound (side output)',
@@ -413,7 +413,7 @@ function render() {
   host.append(drawTable(run.verdict));
   if (built.meta) {
     host.append(el('p', { class: 'small muted' }, [
-      el('strong', { text: built.meta.title }), ' — event time is ' + built.meta.eventTime +
+      el('strong', { text: built.meta.title }), ' - event time is ' + built.meta.eventTime +
       '; processing time is ' + built.meta.processingTime + '. ' + built.meta.licence,
     ]));
   }
