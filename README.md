@@ -346,6 +346,16 @@ no titles, usernames, repository names, comments, payloads or coordinates.
 - The demo page plots one dot per event. At 5,000 events (the real streams) it is
   a density picture, not a readable scatter, and the per-window close ticks are
   suppressed above 60 panes because they become a hatch pattern.
+- Opened from a `file://` URL the page works, but it cannot write the
+  configuration into the address bar: a browser refuses `history.replaceState`
+  on an opaque origin. The controls still apply — the state is held in the page,
+  not re-read from the URL — but a view is only a shareable link when the page is
+  served over http(s). Verified served; the `file://` behaviour is the documented
+  browser rule, not something measured here.
+- The demo page's default log pins its window size and allowed lateness. The
+  policy, termination and watermark controls apply to it, but changing the window
+  would break the nineteen-row story, so those two fields are ignored on that one
+  source and honoured everywhere else.
 - `flume run --build <flag>` exits 1 when findings appear. That is intended — a
   finding is a failure — but it means the planted builds cannot be used in a
   pipeline that treats exit 0 as "ran".
@@ -418,9 +428,13 @@ freshness, the full suite, the fixtures, the streams and the demo on Linux, then
 the suite again on Windows (flume is developed on Windows and its module
 resolution depends on `pathToFileURL`). It has **never run** — this repository
 has not been pushed to a remote, so there is no green badge and this README will
-not imply one. What has been verified is the equivalent locally: lint clean,
-typecheck clean, bundle fresh, measurements fresh, 96/96 tests, all fixtures
-firing, negative control clean.
+not imply one. What has been verified is the equivalent locally, from a fresh
+`git clone` into an empty directory followed by `npm ci`: lint clean, typecheck
+clean, bundle fresh, measurements fresh, 96/96 tests, all fixtures firing,
+negative control clean. That clean-clone run is what proves the `.gitattributes`
+line-ending rules hold — the vendored NDJSON and the generated bundle are both
+compared byte for byte, and a checkout that translated line endings would fail
+both.
 
 ## Development
 

@@ -162,7 +162,13 @@
   <label>events<input name="events" type="number" min="10" step="10"></label>
 </form>
 <p class="small muted">
-  Every control is in the URL, so any view you reach is a link you can send.
+  Every control is in the URL, so any view you reach is a link you can send. The
+  demo log pins its window size and allowed lateness — those two are what make
+  nineteen rows tell the story — but the policy, the termination and the
+  watermark strategy apply to every stream.
+  <strong>processing-time</strong> is one of the planted bugs, and it needs a
+  stream whose arrival rate diverges from its event rate before it does any
+  damage: switch to <em>generated, seeded</em> to watch it overshoot.
 </p>
 
 <div id="output" class="scroll">

@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { runStream, serialiseRun } from './run.js';
+import { runStream } from './run.js';
 import { STRATEGY_NAMES } from './core/watermark.js';
 import { LATE_POLICIES, TERMINATIONS } from './core/engine.js';
 import { latenessProfile } from './core/oracle.js';

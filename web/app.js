@@ -53,15 +53,32 @@ function humanMs(ms) {
   return (ms / 86400000).toFixed(1) + 'd';
 }
 
-/** Read the whole configuration out of the URL, so any view is a link. */
-function readState() {
-  const q = new URLSearchParams(location.search);
+/**
+ * The live configuration.
+ *
+ * It is held here rather than read back out of the URL on every interaction,
+ * because a page opened from a `file://` URL cannot write to its own address
+ * bar (see writeState). Reading the state back from a URL that could not be
+ * updated would silently discard every control change, which would break the
+ * page in exactly the situation the "open it from disk" claim is about.
+ * @type {any}
+ */
+let CURRENT = null;
+
+/**
+ * Coerce and clamp a raw configuration. Every value that arrives from a URL or
+ * a form field goes through here, so an out-of-range or misspelled one falls
+ * back to a default rather than reaching the engine.
+ * @param {any} raw
+ */
+function normalise(raw) {
   /** @type {any} */
   const s = { ...DEFAULTS };
   for (const key of Object.keys(DEFAULTS)) {
-    const raw = q.get(key);
-    if (raw === null) continue;
-    s[key] = typeof DEFAULTS[/** @type {keyof typeof DEFAULTS} */ (key)] === 'number' ? Number(raw) : raw;
+    if (raw[key] === undefined || raw[key] === null) continue;
+    s[key] = typeof DEFAULTS[/** @type {keyof typeof DEFAULTS} */ (key)] === 'number'
+      ? Number(raw[key])
+      : String(raw[key]);
   }
   if (!SOURCES.some((x) => x.id === s.source)) s.source = DEFAULTS.source;
   if (!LATE_POLICIES.includes(s.policy)) s.policy = DEFAULTS.policy;
@@ -77,14 +94,41 @@ function readState() {
   return s;
 }
 
-/** @param {any} state */
+/** The initial configuration, taken from the URL so any view is a link. */
+function readStateFromUrl() {
+  const q = new URLSearchParams(location.search);
+  /** @type {any} */
+  const raw = {};
+  for (const key of Object.keys(DEFAULTS)) {
+    const v = q.get(key);
+    if (v !== null) raw[key] = v;
+  }
+  return normalise(raw);
+}
+
+/**
+ * Push the configuration back into the address bar, so any view is a link.
+ *
+ * Wrapped, because a page opened from a `file://` URL has an opaque origin and
+ * the browser refuses `history.replaceState` on it. The page must still work
+ * when a stranger double-clicks index.html on their own disk -- that is the
+ * whole "no server" claim -- so a refusal here costs the shareable URL and
+ * nothing else.
+ *
+ * @param {any} state
+ */
 function writeState(state) {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(state)) {
     if (String(v) !== String(DEFAULTS[/** @type {keyof typeof DEFAULTS} */ (k)])) q.set(k, String(v));
   }
   const url = location.pathname + (q.toString() ? '?' + q.toString() : '');
-  history.replaceState(null, '', url);
+  try {
+    history.replaceState(null, '', url);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** @param {any} state */
@@ -324,7 +368,7 @@ function drawTable(verdict) {
 }
 
 function render() {
-  const state = readState();
+  const state = CURRENT;
   writeState(state);
   const built = buildEvents(state);
   const host = /** @type {HTMLElement} */ (document.getElementById('output'));
@@ -334,22 +378,27 @@ function render() {
     return;
   }
   const events = built.events;
-  const config = state.source === 'demo'
-    ? { ...DEMO_CONFIG }
-    : {
-      windowMs: built.meta ? built.meta.windowMs : state.window,
-      allowedLatenessMs: built.meta ? built.meta.windowMs : state.lateness,
-      latePolicy: state.policy,
-      termination: state.termination,
-      watermark: {
-        name: state.watermark, boundMs: state.bound,
-        percentile: 0.99, sampleSize: 512, floorMs: state.bound, msPerEvent: 1000,
-      },
-    };
-  if (state.source === 'demo') {
-    config.latePolicy = state.policy;
-    config.termination = state.termination;
-  }
+  // The demo log pins its window and allowed lateness, because those two are
+  // what make its nineteen rows tell the story on the first screen. Everything
+  // else -- the policy, the termination, the watermark strategy -- is honoured
+  // on every source, so no control on the page is inert.
+  const fixed = state.source === 'demo';
+  const config = {
+    windowMs: fixed ? DEMO_CONFIG.windowMs : (built.meta ? built.meta.windowMs : state.window),
+    allowedLatenessMs: fixed
+      ? DEMO_CONFIG.allowedLatenessMs
+      : (built.meta ? built.meta.windowMs : state.lateness),
+    latePolicy: state.policy,
+    termination: state.termination,
+    watermark: {
+      name: state.watermark,
+      boundMs: fixed ? DEMO_CONFIG.watermark.boundMs : state.bound,
+      percentile: 0.99,
+      sampleSize: 512,
+      floorMs: fixed ? DEMO_CONFIG.watermark.boundMs : state.bound,
+      msPerEvent: 1000,
+    },
+  };
   const run = runStream(events, config);
 
   host.append(drawVerdict(run.verdict));
@@ -384,30 +433,26 @@ function describe(run, built, state) {
 }
 
 function wireControls() {
-  const state = readState();
   const form = /** @type {HTMLFormElement} */ (document.getElementById('controls'));
   /** @type {NodeListOf<HTMLInputElement|HTMLSelectElement>} */
   const fields = form.querySelectorAll('[name]');
+  /** Put the visible controls in step with whatever was actually applied. */
+  const sync = () => {
+    for (const f of fields) if (f.name in CURRENT) f.value = String(CURRENT[f.name]);
+  };
+  sync();
   for (const field of fields) {
     const name = field.name;
-    if (name in state) field.value = String(state[name]);
     field.addEventListener('change', () => {
-      const next = readState();
-      /** @type {any} */ (next)[name] = field.value;
-      const q = new URLSearchParams();
-      for (const [k, v] of Object.entries(next)) {
-        if (String(v) !== String(DEFAULTS[/** @type {keyof typeof DEFAULTS} */ (k)])) q.set(k, String(v));
-      }
-      history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q.toString() : ''));
+      CURRENT = normalise({ ...CURRENT, [name]: field.value });
       render();
-      // Keep the visible controls in step with what was actually applied.
-      const applied = readState();
-      for (const f of fields) if (f.name in applied) f.value = String(applied[f.name]);
+      sync();
     });
   }
 }
 
 if (typeof document !== 'undefined') {
+  CURRENT = readStateFromUrl();
   wireControls();
   render();
 }
