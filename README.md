@@ -426,9 +426,9 @@ support, and 22 is the oldest version this has actually been exercised on.
 pinned Node 22.14.0 and runs lint, typecheck, bundle freshness, measurement
 freshness, the full suite, the fixtures, the streams and the demo on Linux, then
 the suite again on Windows (flume is developed on Windows and its module
-resolution depends on `pathToFileURL`). It has **never run** - this repository
-has not been pushed to a remote, so there is no green badge and this README will
-not imply one. What has been verified is the equivalent locally, from a fresh
+resolution depends on `pathToFileURL`). It first ran on 2026-09-06, on the push of `650abeb`, and passed (GitHub
+Actions run 34035769216). The run is the badge; this README implies nothing
+beyond it. What has been verified is the equivalent locally, from a fresh
 `git clone` into an empty directory followed by `npm ci`: lint clean, typecheck
 clean, bundle fresh, measurements fresh, 96/96 tests, all fixtures firing,
 negative control clean. That clean-clone run is what proves the `.gitattributes`
