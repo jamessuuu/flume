@@ -1,0 +1,59 @@
+{
+  "name": "flume",
+  "version": "0.1.0",
+  "description": "Event-time stream processing with watermarks: windows close on a watermark over event time, late data is handled by an explicit policy, and every window comes back complete, revised, or unverifiable.",
+  "type": "module",
+  "license": "MIT",
+  "author": "James Santos",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jamessuuu/flume.git"
+  },
+  "homepage": "https://github.com/jamessuuu/flume#readme",
+  "bugs": {
+    "url": "https://github.com/jamessuuu/flume/issues"
+  },
+  "keywords": [
+    "event-time",
+    "watermark",
+    "stream-processing",
+    "windowing",
+    "late-data",
+    "dataflow-model",
+    "deterministic-replay"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "bin": {
+    "flume": "./src/cli.js"
+  },
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src",
+    "web",
+    "vendor",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "demo": "node src/cli.js demo",
+    "streams": "node src/cli.js streams",
+    "fixtures": "node src/cli.js fixtures",
+    "measure": "node tools/measure-streams.mjs",
+    "check:measure": "node tools/measure-streams.mjs --check",
+    "build:web": "node tools/bundle.mjs",
+    "check:web": "node tools/bundle.mjs --check",
+    "typecheck": "tsc --noEmit -p jsconfig.json",
+    "lint": "node tools/lint.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "24.3.0",
+    "typescript": "5.9.2"
+  }
+}

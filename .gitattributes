@@ -1,0 +1,6 @@
+# The vendored slices and the generated bundle are compared byte for byte by
+# tools/bundle.mjs --check and test/streams.test.js. Line-ending translation on
+# checkout would make those comparisons platform-dependent, so it is off.
+* text=auto eol=lf
+*.ndjson -text
+web/flume.bundle.js -text

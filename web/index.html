@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>flume — event time, processing time, and the line between them</title>
+<meta name="description" content="A small event-time stream processor. Windows close on watermarks, not clocks. Late data is handled by an explicit policy, and every window comes back complete, revised, or unverifiable.">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0e1013;
+    --panel: #16191e;
+    --panel-2: #1d2127;
+    --line: #2a2f37;
+    --fg: #e7e9ee;
+    --muted: #9aa1ad;
+    --accent: #5b8def;
+    --bad: #e5484d;
+    --good: #38b48b;
+    --warn: #f5a524;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: var(--sans); font-size: 16px; line-height: 1.55;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 26px 18px 72px; }
+  a { color: var(--accent); }
+  code, .mono { font-family: var(--mono); }
+  .muted { color: var(--muted); }
+  .small { font-size: 13.5px; }
+
+  header h1 { font-family: var(--mono); font-size: clamp(26px, 6vw, 40px); margin: 0 0 6px; letter-spacing: -0.02em; }
+  header .tagline { margin: 0 0 12px; font-size: clamp(15px, 3.6vw, 19px); max-width: 64ch; }
+  header .credit {
+    margin: 0 0 18px; font-size: 13.5px; color: var(--muted); max-width: 74ch;
+    border-left: 2px solid var(--line); padding-left: 12px;
+  }
+
+  .verdict { margin: 8px 0 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+  .counts { display: flex; flex-wrap: wrap; gap: 10px; }
+  .count {
+    display: flex; align-items: baseline; gap: 8px;
+    padding: 8px 14px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--line);
+  }
+  .count strong { font-family: var(--mono); font-size: 24px; }
+  .count span { color: var(--muted); font-size: 13.5px; }
+  .count-complete strong { color: var(--good); }
+  .count-revised strong { color: var(--warn); }
+  .count-unverifiable strong { color: var(--muted); }
+  .verdict p { margin: 10px 0 0; }
+  .findings { margin-top: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--bad); color: #ffd7d8; background: #2a1417; }
+
+  svg { display: block; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+  .band { fill: transparent; }
+  .band-odd { fill: #ffffff06; }
+  .band-revised { fill: #f5a5241a; }
+  .band-unverifiable { fill: #9aa1ad12; }
+  .lateregion { fill: #e5484d14; stroke: none; }
+  .regionlabel { fill: #e5484d99; font: 11px var(--sans); }
+  .watermark { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+  .close { stroke: var(--good); stroke-width: 1; stroke-dasharray: 3 3; }
+  .close-revision { stroke: var(--warn); stroke-dasharray: 2 2; }
+  .panelabel { fill: var(--muted); font: 11px var(--mono); }
+  .axis { stroke: var(--line); stroke-width: 1; }
+  .axislabel { fill: var(--muted); font: 11px var(--sans); }
+  .ev { fill: #cfd6e4; }
+  .ev-late { fill: var(--warn); }
+  .ev-toolate { fill: var(--bad); }
+
+  .legend { margin: 10px 0 4px; color: var(--muted); }
+  .k { font-family: var(--mono); font-weight: 700; }
+  .k-wm { color: var(--accent); }
+  .k-ev { color: #cfd6e4; }
+  .k-late { color: var(--warn); }
+  .k-toolate { color: var(--bad); }
+
+  form#controls {
+    display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end;
+    margin: 18px 0 6px; padding: 14px 16px;
+    border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
+  }
+  form#controls label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--muted); }
+  form#controls select, form#controls input {
+    font-family: var(--mono); font-size: 13px; padding: 6px 8px;
+    background: var(--panel-2); color: var(--fg); border: 1px solid var(--line); border-radius: 6px;
+  }
+  form#controls input { width: 9ch; }
+
+  table.windows { width: 100%; border-collapse: collapse; margin: 16px 0 0; font-size: 13px; }
+  table.windows th, table.windows td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.windows th { color: var(--muted); font-weight: 600; }
+  .row-complete td:nth-child(2) { color: var(--good); }
+  .row-revised td:nth-child(2) { color: var(--warn); }
+  .row-unverifiable td:nth-child(2) { color: var(--muted); }
+  .scroll { overflow-x: auto; }
+
+  section { margin-top: 34px; }
+  section h2 { font-size: 18px; margin: 0 0 8px; }
+  section p { margin: 0 0 10px; max-width: 74ch; }
+  ul { max-width: 74ch; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>flume</h1>
+  <p class="tagline">
+    Every event here carries two times: when it <em>happened</em>, and when it
+    <em>arrived</em>. Windows close on a watermark over the first, never on a clock
+    over the second — and the picture below is what that difference looks like.
+  </p>
+  <p class="credit">
+    The watermark, the trigger, the allowed-lateness bound and the retracted pane
+    are the Dataflow model’s: Akidau et al., <em>The Dataflow Model</em>, VLDB 2015.
+    flume implements a small, single-process reading of those semantics so they can
+    be watched and checked. It is not Flink, not Beam, and not Kafka Streams.
+  </p>
+</header>
+
+<form id="controls" autocomplete="off">
+  <label>stream
+    <select name="source">
+      <option value="demo">the demo log (19 events)</option>
+      <option value="synthetic">generated, seeded</option>
+      <option value="gharchive">GitHub events (real)</option>
+      <option value="wikimedia">Wikimedia edits (real)</option>
+      <option value="usgs">USGS earthquakes (real)</option>
+    </select>
+  </label>
+  <label>late policy
+    <select name="policy">
+      <option value="update">update</option>
+      <option value="drop">drop</option>
+      <option value="side-output">side-output</option>
+    </select>
+  </label>
+  <label>watermark
+    <select name="watermark">
+      <option value="bounded">bounded</option>
+      <option value="bounded-naive">bounded-naive</option>
+      <option value="percentile">percentile</option>
+      <option value="punctuated">punctuated</option>
+      <option value="processing-time">processing-time (planted bug)</option>
+    </select>
+  </label>
+  <label>termination
+    <select name="termination">
+      <option value="idle">idle</option>
+      <option value="flush">flush</option>
+    </select>
+  </label>
+  <label>bound (ms)<input name="bound" type="number" min="0" step="100"></label>
+  <label>window (ms)<input name="window" type="number" min="1" step="1000"></label>
+  <label>lateness (ms)<input name="lateness" type="number" min="0" step="1000"></label>
+  <label>seed<input name="seed" type="number" step="1"></label>
+  <label>events<input name="events" type="number" min="10" step="10"></label>
+</form>
+<p class="small muted">
+  Every control is in the URL, so any view you reach is a link you can send.
+</p>
+
+<div id="output" class="scroll">
+  <p class="muted">Loading the engine…</p>
+</div>
+
+<section>
+  <h2>What the picture says</h2>
+  <p>
+    The blue line is the watermark: the engine’s standing claim that no event with
+    an event time at or below it will arrive from here on. It only ever moves
+    right as you go down, because a watermark that moved back would retract a
+    claim the engine had already acted on.
+  </p>
+  <p>
+    <strong>Every dot to the left of that line arrived late.</strong> That is not a
+    definition to memorise; it is a region of the plane. A dot inside the allowed
+    lateness makes its window emit a corrected pane — the window is
+    <em>revised</em>, and the row shows the old value it retracted. A dot past the
+    bound cannot: its window’s state is gone, so the event goes to the side output
+    carrying its reason, and the window becomes <em>unverifiable</em>.
+  </p>
+</section>
+
+<section>
+  <h2>Three outcomes, never two</h2>
+  <ul>
+    <li><strong>complete</strong> — the watermark closed it, and the emitted value equals what a batch recomputation over the whole log says. Nothing arriving later changed it.</li>
+    <li><strong>revised</strong> — late data inside the bound corrected an already-emitted pane. The final value is right; it was not right the first time, and the report refuses to blur those two.</li>
+    <li><strong>unverifiable</strong> — the emitted panes cannot be shown to be right, for one of two stated reasons: the watermark never reached the window (the log ended first), or data arrived past the allowed lateness. Both are printed; neither is rounded to “fine”.</li>
+  </ul>
+  <p class="small muted">
+    Switch the stream to <em>USGS earthquakes</em> to watch a bound that is fine for
+    one stream fail on another. That catalogue revises records for weeks, so a
+    watermark bound measured in seconds turns almost every window unverifiable —
+    with a receipt for every event, and no accusation against the engine, because
+    the engine did exactly what it was configured to do.
+  </p>
+</section>
+
+<section>
+  <h2>What this is not</h2>
+  <p>
+    One process, in-memory state, no checkpointing, no exactly-once across a
+    restart, tumbling windows only, and one aggregate (a count) chosen because its
+    ground truth is one line of code. It is a demonstration of semantics, not a
+    stream processor to run anything on.
+  </p>
+  <p class="small">
+    Source, tests, the planted fixtures and the three vendored real streams:
+    <a href="https://github.com/jamessuuu/flume">github.com/jamessuuu/flume</a>.
+  </p>
+</section>
+
+</div>
+<script src="flume.bundle.js"></script>
+</body>
+</html>

@@ -1,0 +1,301 @@
+{
+  "generatedBy": "tools/measure-streams.mjs",
+  "configs": [
+    "bounded-1s",
+    "bounded-60s",
+    "percentile-p99"
+  ],
+  "streams": [
+    {
+      "id": "gharchive",
+      "title": "GitHub public events (GH Archive)",
+      "source": "https://data.gharchive.org/2026-01-15-3.json.gz",
+      "events": 5000,
+      "eventTimeSpanMs": 128000,
+      "distinctEventTimes": 120,
+      "eventsPerDistinctTime": 41.67,
+      "windowMs": 10000,
+      "lateness": {
+        "events": 5000,
+        "outOfOrder": 133,
+        "outOfOrderPct": 2.66,
+        "p50": 0,
+        "p90": 0,
+        "p99": 1000,
+        "p999": 46000,
+        "max": 108000
+      },
+      "runs": [
+        {
+          "config": "bounded-1s",
+          "summary": {
+            "complete": 1,
+            "revised": 2,
+            "unverifiable": 10
+          },
+          "reasons": {
+            "lateness-bound-exceeded": 9,
+            "watermark-never-reached": 1
+          },
+          "findings": 0,
+          "findingCounts": {},
+          "watermarkOvershoots": 0,
+          "rawWatermarkRegressions": 0,
+          "sideOutput": 16,
+          "revisionsEmitted": 5,
+          "openedAfterClose": 0,
+          "windowsNoPaneAllReceipted": 0
+        },
+        {
+          "config": "bounded-60s",
+          "summary": {
+            "complete": 5,
+            "revised": 0,
+            "unverifiable": 8
+          },
+          "reasons": {
+            "lateness-bound-exceeded": 1,
+            "watermark-never-reached": 7
+          },
+          "findings": 0,
+          "findingCounts": {},
+          "watermarkOvershoots": 0,
+          "rawWatermarkRegressions": 0,
+          "sideOutput": 2,
+          "revisionsEmitted": 0,
+          "openedAfterClose": 0,
+          "windowsNoPaneAllReceipted": 0
+        },
+        {
+          "config": "percentile-p99",
+          "summary": {
+            "complete": 1,
+            "revised": 2,
+            "unverifiable": 10
+          },
+          "reasons": {
+            "lateness-bound-exceeded": 9,
+            "watermark-never-reached": 1
+          },
+          "findings": 0,
+          "findingCounts": {},
+          "watermarkOvershoots": 0,
+          "rawWatermarkRegressions": 635,
+          "sideOutput": 16,
+          "revisionsEmitted": 5,
+          "openedAfterClose": 0,
+          "windowsNoPaneAllReceipted": 0
+        }
+      ],
+      "boundary": [
+        {
+          "strategy": "bounded",
+          "lateEvents": 28,
+          "lateInBound": 11,
+          "tooLate": 17
+        },
+        {
+          "strategy": "bounded-naive",
+          "lateEvents": 35,
+          "lateInBound": 18,
+          "tooLate": 17
+        }
+      ],
+      "naiveExtraLate": 7
+    },
+    {
+      "id": "wikimedia",
+      "title": "Wikimedia recent changes (EventStreams)",
+      "source": "https://stream.wikimedia.org/v2/stream/recentchange",
+      "events": 5000,
+      "eventTimeSpanMs": 110000,
+      "distinctEventTimes": 104,
+      "eventsPerDistinctTime": 48.08,
+      "windowMs": 10000,
+      "lateness": {
+        "events": 5000,
+        "outOfOrder": 3217,
+        "outOfOrderPct": 64.34,
+        "p50": 1000,
+        "p90": 2000,
+        "p99": 8000,
+        "p999": 18000,
+        "max": 22000
+      },
+      "runs": [
+        {
+          "config": "bounded-1s",
+          "summary": {
+            "complete": 0,
+            "revised": 5,
+            "unverifiable": 7
+          },
+          "reasons": {
+            "lateness-bound-exceeded": 6,
+            "watermark-never-reached": 1
+          },
+          "findings": 0,
+          "findingCounts": {},
+          "watermarkOvershoots": 0,
+          "rawWatermarkRegressions": 0,
+          "sideOutput": 8,
+          "revisionsEmitted": 87,
+          "openedAfterClose": 1,
+          "windowsNoPaneAllReceipted": 1
+        },
+        {
+          "config": "bounded-60s",
+          "summary": {
+            "complete": 5,
+            "revised": 0,
+            "unverifiable": 7
+          },
+          "reasons": {
+            "watermark-never-reached": 7
+          },
+          "findings": 0,
+          "findingCounts": {},
+          "watermarkOvershoots": 0,
+          "rawWatermarkRegressions": 0,
+          "sideOutput": 0,
+          "revisionsEmitted": 0,
+          "openedAfterClose": 0,
+          "windowsNoPaneAllReceipted": 0
+        },
+        {
+          "config": "percentile-p99",
+          "summary": {
+            "complete": 1,
+            "revised": 7,
+            "unverifiable": 4
+          },
+          "reasons": {
+            "lateness-bound-exceeded": 3,
+            "watermark-never-reached": 1
+          },
+          "findings": 0,
+          "findingCounts": {},
+          "watermarkOvershoots": 0,
+          "rawWatermarkRegressions": 1202,
+          "sideOutput": 4,
+          "revisionsEmitted": 16,
+          "openedAfterClose": 1,
+          "windowsNoPaneAllReceipted": 1
+        }
+      ],
+      "boundary": [
+        {
+          "strategy": "bounded",
+          "lateEvents": 199,
+          "lateInBound": 190,
+          "tooLate": 9
+        },
+        {
+          "strategy": "bounded-naive",
+          "lateEvents": 483,
+          "lateInBound": 473,
+          "tooLate": 10
+        }
+      ],
+      "naiveExtraLate": 284
+    },
+    {
+      "id": "usgs",
+      "title": "USGS earthquake catalogue",
+      "source": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson",
+      "events": 5000,
+      "eventTimeSpanMs": 1437273592,
+      "distinctEventTimes": 5000,
+      "eventsPerDistinctTime": 1,
+      "windowMs": 3600000,
+      "lateness": {
+        "events": 5000,
+        "outOfOrder": 4288,
+        "outOfOrderPct": 85.76,
+        "p50": 38455860,
+        "p90": 307910788,
+        "p99": 1103094650,
+        "p999": 1313159680,
+        "max": 1317891756
+      },
+      "runs": [
+        {
+          "config": "bounded-1s",
+          "summary": {
+            "complete": 5,
+            "revised": 6,
+            "unverifiable": 387
+          },
+          "reasons": {
+            "lateness-bound-exceeded": 386,
+            "watermark-never-reached": 1
+          },
+          "findings": 0,
+          "findingCounts": {},
+          "watermarkOvershoots": 0,
+          "rawWatermarkRegressions": 0,
+          "sideOutput": 3719,
+          "revisionsEmitted": 272,
+          "openedAfterClose": 36,
+          "windowsNoPaneAllReceipted": 38
+        },
+        {
+          "config": "bounded-60s",
+          "summary": {
+            "complete": 5,
+            "revised": 6,
+            "unverifiable": 387
+          },
+          "reasons": {
+            "lateness-bound-exceeded": 386,
+            "watermark-never-reached": 1
+          },
+          "findings": 0,
+          "findingCounts": {},
+          "watermarkOvershoots": 0,
+          "rawWatermarkRegressions": 0,
+          "sideOutput": 3715,
+          "revisionsEmitted": 272,
+          "openedAfterClose": 36,
+          "windowsNoPaneAllReceipted": 38
+        },
+        {
+          "config": "percentile-p99",
+          "summary": {
+            "complete": 43,
+            "revised": 1,
+            "unverifiable": 354
+          },
+          "reasons": {
+            "lateness-bound-exceeded": 119,
+            "watermark-never-reached": 235
+          },
+          "findings": 0,
+          "findingCounts": {},
+          "watermarkOvershoots": 0,
+          "rawWatermarkRegressions": 4295,
+          "sideOutput": 687,
+          "revisionsEmitted": 18,
+          "openedAfterClose": 0,
+          "windowsNoPaneAllReceipted": 3
+        }
+      ],
+      "boundary": [
+        {
+          "strategy": "bounded",
+          "lateEvents": 4027,
+          "lateInBound": 308,
+          "tooLate": 3719
+        },
+        {
+          "strategy": "bounded-naive",
+          "lateEvents": 4027,
+          "lateInBound": 308,
+          "tooLate": 3719
+        }
+      ],
+      "naiveExtraLate": 0
+    }
+  ],
+  "totalFindings": 0
+}
