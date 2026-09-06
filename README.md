@@ -16,8 +16,13 @@ is not Flink, not Beam, and not Kafka Streams — see the scope cut.
 ```
 $ node src/cli.js stream usgs
 USGS earthquake catalogue
-  event time  the origin time of the earthquake
-  processing  the catalogue record's updated time, sorted ascending to reconstruct arrival
+  source     https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson
+  event time the origin time of the earthquake
+  processing the catalogue record's updated time, sorted ascending to reconstruct arrival
+  licence    US Government work, not subject to copyright in the US (17 U.S.C. 105). See vendor/usgs/SOURCE.md
+
+watermark: bounded out-of-orderness, bound 2000ms (watermark = maxSeen - bound - 1)
+windows 1.0h, allowed lateness 1.0h, late policy update
 measured lateness: 4288/5000 out of order (85.76%), p50 10.7h, p99 12.8d, max 15.3d
 
 5 complete   6 revised   387 unverifiable   (398 windows of 1.0h)
@@ -33,7 +38,7 @@ a receipt, and 387 windows are unknowable rather than quietly wrong.
 
 ---
 
-## Run it in 60 seconds
+## Install and run it in 60 seconds
 
 ```sh
 git clone https://github.com/jamessuuu/flume && cd flume
@@ -152,7 +157,7 @@ nine runs. Every one was a false positive, and each had a distinct mechanism:
 | retired finding | count | why it was wrong |
 |---|---:|---|
 | `no-pane-after-close` | 81 | Fires when the watermark passed a window's end but no pane was emitted. On USGS with an hour bound, 38 windows had *every one* of their events arrive after the state was released — so no state was ever created, and all of them were receipted to the side output. Nothing was lost and nothing was silent. The bound was too small; the engine was fine. |
-| `unrevised-late` | 40 | Fires when a window has in-bound late data under the `update` policy but only one pane. It fired on all 20 USGS windows (× 2 configurations) whose *first* event arrived after the watermark had already passed their end: for those, one pane is the correct answer, because that pane **is** the close. The check was wrong, not the engine. |
+| `unrevised-late` | 40 | Fires when a window has in-bound late data under the `update` policy but only one pane. USGS has 36 windows whose *first* event arrived after the watermark had already passed their end; on the 20 of those that received exactly one late event, one pane is the correct answer, because that pane **is** the close. 20 windows × 2 fixed-bound configurations = 40. The check was wrong, not the engine. |
 | `watermark-regression` | 3 | Fires when the raw watermark falls. For a fixed bound that is impossible, so it means a bug. For the **adaptive** percentile strategy the raw value falls every time the sliding sample forgets an outlier — 4,295 times on USGS alone. That is the strategy working as designed. |
 | **total** | **124** | |
 
@@ -160,10 +165,12 @@ After the fix — reclassify a fully receipted window as `unverifiable /
 lateness-bound-exceeded`, replace the pane heuristic with an exact identity
 (`panes === 1 + lateInBound`, or `=== lateInBound` for a window opened after its
 close), and only accuse a strategy that *declared* `monotonicByConstruction` —
-the same nine runs produce:
+the same nine runs produce nothing at all:
 
 ```
-TOTAL defect findings across the 9 runs: 0
+$ node --test "test/streams.test.js"
+✔ a correct engine produces ZERO defect findings on every real stream and configuration (547ms)
+✔ the 124 retired false positives are reconstructible, and all 124 are still not defects (540ms)
 ```
 
 **The 124 is not a memory.** `test/streams.test.js` reconstructs all three
@@ -221,13 +228,11 @@ Planted fixtures (recipes in src/fixtures.js, measured 2026-09-06)
   OK   processing-time-watermark 40/40 seeds fired "watermark-overshoot" (floor 40), control 0
   OK   close-without-lateness    40/40 seeds fired "premature-close" (floor 40), control 0
   OK   silent-drop               40/40 seeds fired "silent-drop" (floor 40), control 0
-  OK   checker-revised-as-complete  hid 98 revised windows across 20/20 seeds; every change
-       was an exact relabel of revised to complete
+  OK   checker-revised-as-complete  hid 98 revised windows across 20/20 seeds; every change was an exact relabel of revised to complete
 
 Negative control: 400 executions of a perfectly ordered, zero-lateness stream
   flush termination: 0 revised, 0 unverifiable, 0 findings
-  idle termination:  400/400 runs unverifiable ONLY at the tail the watermark never reached,
-                     0 findings
+  idle termination:  400/400 runs unverifiable ONLY at the tail the watermark never reached, 0 findings
 ```
 
 **The sabotaged checker is the one that matters.** The other three prove the
@@ -401,7 +406,7 @@ flume: --seed must be an integer, got "banana"
 | the sabotaged checker | `node --test "test/sabotage.test.js"` |
 | determinism | `node --test "test/determinism.test.js"` |
 | hostile input | `node --test "test/cli.test.js"` |
-| everything | `npm test` (95 tests, ~2 s) |
+| everything | `npm test` (96 tests, ~2 s) |
 
 Measured on Node v24.15.0, Windows 11, 2026-09-06. `engines.node` is `>=22.0.0`:
 the library runs on older Node, but `npm test` uses the test runner's glob
@@ -414,13 +419,13 @@ the suite again on Windows (flume is developed on Windows and its module
 resolution depends on `pathToFileURL`). It has **never run** — this repository
 has not been pushed to a remote, so there is no green badge and this README will
 not imply one. What has been verified is the equivalent locally: lint clean,
-typecheck clean, bundle fresh, measurements fresh, 95/95 tests, all fixtures
+typecheck clean, bundle fresh, measurements fresh, 96/96 tests, all fixtures
 firing, negative control clean.
 
 ## Development
 
 ```sh
-npm test           # 95 tests
+npm test           # 96 tests
 npm run lint       # a project-specific gate, not a style opinion engine
 npm run typecheck  # tsc over JSDoc types
 npm run measure    # regenerate vendor/MEASURED.json after touching the core
