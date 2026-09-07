@@ -20,6 +20,17 @@
     --warn: #f5a524;
     --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
     --sans: system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+
+    /* Product surface, added 2026-09-07. The page was already dusk, but every
+       panel was a flat plate with one hairline and nothing on it responded to
+       being touched. One easing curve, two durations, three elevations. */
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --dur-fast: 140ms;
+    --dur-slow: 420ms;
+    --depth-edge: inset 0 1px 0 rgb(255 255 255 / 6%);
+    --elev-1: 0 1px 2px -1px rgb(0 0 0 / 45%), 0 4px 12px -4px rgb(0 0 0 / 40%);
+    --elev-2: 0 2px 4px -2px rgb(0 0 0 / 50%), 0 12px 32px -8px rgb(0 0 0 / 48%);
+    --elev-3: 0 4px 8px -4px rgb(0 0 0 / 55%), 0 28px 64px -16px rgb(0 0 0 / 60%);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -28,26 +39,95 @@
     font-family: var(--sans); font-size: 16px; line-height: 1.55;
     -webkit-text-size-adjust: 100%;
   }
-  .wrap { max-width: 1000px; margin: 0 auto; padding: 26px 18px 72px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 26px 18px 72px; }
+
+  /* The one ambient bloom on the page, tinted by the accent (the watermark
+     line's own colour) with a warn edge for the late region. */
+  .hero {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
+    padding-bottom: 4px;
+  }
+  .hero::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    /* inset: 0, with both gradients reaching zero before they meet a box
+       edge. Bleeding the pseudo-element past the hero and then clipping it
+       drew the bloom as a hard-edged rectangle in the corner -- visible at
+       1440 on the first attempt. */
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(72% 130% at 16% 0%, rgba(91, 141, 239, 0.30), transparent 60%),
+      radial-gradient(50% 110% at 70% 0%, rgba(245, 165, 36, 0.16), transparent 55%);
+  }
+  .kicker {
+    margin: 0 0 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
   a { color: var(--accent); }
   code, .mono { font-family: var(--mono); }
   .muted { color: var(--muted); }
   .small { font-size: 13.5px; }
 
-  header h1 { font-family: var(--mono); font-size: clamp(26px, 6vw, 40px); margin: 0 0 6px; letter-spacing: -0.02em; }
-  header .tagline { margin: 0 0 12px; font-size: clamp(15px, 3.6vw, 19px); max-width: 64ch; }
-  header .credit {
-    margin: 0 0 18px; font-size: 13.5px; color: var(--muted); max-width: 74ch;
+  header h1 {
+    font-family: var(--sans);
+    font-weight: 650;
+    font-size: clamp(44px, 10vw, 72px);
+    line-height: 0.99;
+    margin: 0 0 12px;
+    letter-spacing: -0.035em;
+  }
+  header .tagline { margin: 0 0 14px; font-size: clamp(16px, 3.6vw, 20px); line-height: 1.5; color: var(--muted); max-width: 56ch; }
+
+  /* The Dataflow citation is attribution, not the pitch. Same words, one
+     line until asked. */
+  .credit { margin: 0 0 4px; max-width: 74ch; }
+  .credit > summary {
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 0.5em;
+    padding: 6px 13px;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: var(--panel); box-shadow: var(--depth-edge);
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    list-style: none;
+    transition: border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+  }
+  .credit > summary::-webkit-details-marker { display: none; }
+  .credit > summary:hover { border-color: var(--accent); color: var(--fg); }
+  .credit > p {
+    margin: 12px 0 0; font-size: 13.5px; color: var(--muted);
     border-left: 2px solid var(--line); padding-left: 12px;
   }
+  @media (max-width: 560px) { .credit > summary { border-radius: 10px; } }
 
-  .verdict { margin: 8px 0 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+  /* Controls and readout are one instrument: the form is its toolbar, the
+     output its screen. Before this they were two unrelated plates with a
+     paragraph of prose wedged between them. */
+  .instrument {
+    margin: 22px 0 0;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--panel);
+    box-shadow: var(--depth-edge), var(--elev-3);
+    overflow: hidden;
+  }
+  .instrument > #output { padding: 14px 16px 16px; }
+
+  .verdict { margin: 0 0 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); box-shadow: var(--depth-edge); }
   .counts { display: flex; flex-wrap: wrap; gap: 10px; }
   .count {
     display: flex; align-items: baseline; gap: 8px;
-    padding: 8px 14px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--line);
+    padding: 10px 16px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line);
+    box-shadow: var(--depth-edge), var(--elev-1);
   }
-  .count strong { font-family: var(--mono); font-size: 24px; }
+  .count strong { font-family: var(--mono); font-size: 28px; letter-spacing: -0.02em; }
   .count span { color: var(--muted); font-size: 13.5px; }
   .count-complete strong { color: var(--good); }
   .count-revised strong { color: var(--warn); }
@@ -55,7 +135,7 @@
   .verdict p { margin: 10px 0 0; }
   .findings { margin-top: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--bad); color: #ffd7d8; background: #2a1417; }
 
-  svg { display: block; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+  svg { display: block; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; box-shadow: inset 0 1px 0 rgb(0 0 0 / 45%); }
   .band { fill: transparent; }
   .band-odd { fill: #ffffff06; }
   .band-revised { fill: #f5a5241a; }
@@ -81,18 +161,36 @@
 
   form#controls {
     display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end;
-    margin: 18px 0 6px; padding: 14px 16px;
-    border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
+    margin: 0; padding: 14px 16px;
+    border: 0; border-bottom: 1px solid var(--line); border-radius: 0;
+    background: var(--panel-2);
   }
   form#controls label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--muted); }
   form#controls select, form#controls input {
-    font-family: var(--mono); font-size: 13px; padding: 6px 8px;
-    background: var(--panel-2); color: var(--fg); border: 1px solid var(--line); border-radius: 6px;
+    font-family: var(--mono); font-size: 13px; padding: 7px 9px;
+    background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 8px;
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
   }
+  form#controls select:hover, form#controls input:hover { border-color: #3c434e; }
+  form#controls select:focus, form#controls input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.2);
+  }
+  form#controls select:focus-visible, form#controls input:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
+  form#controls label { transition: color var(--dur-fast) var(--ease-out); }
+  form#controls label:hover { color: var(--fg); }
   form#controls input { width: 9ch; }
 
-  table.windows { width: 100%; border-collapse: collapse; margin: 16px 0 0; font-size: 13px; }
-  table.windows th, table.windows td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  /* min-width, not just width:100%: at 390px the reason column squeezed to a
+     few characters and stretched every row to roughly 180px tall. The table
+     scrolls inside #output instead. */
+  table.windows { width: 100%; min-width: 620px; border-collapse: collapse; margin: 16px 0 0; font-size: 13px; }
+  table.windows th, table.windows td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
   table.windows th { color: var(--muted); font-weight: 600; }
   .row-complete td:nth-child(2) { color: var(--good); }
   .row-revised td:nth-child(2) { color: var(--warn); }
@@ -100,9 +198,32 @@
   .scroll { overflow-x: auto; }
 
   section { margin-top: 34px; }
-  section h2 { font-size: 18px; margin: 0 0 8px; }
+  section h2 {
+    font-size: clamp(20px, 3vw, 26px);
+    line-height: 1.15;
+    letter-spacing: -0.022em;
+    margin: 0 0 10px;
+  }
   section p { margin: 0 0 10px; max-width: 74ch; }
   ul { max-width: 74ch; }
+
+  @keyframes fl-rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+  .rise { animation: fl-rise var(--dur-slow) var(--ease-out) both; }
+  .rise-2 { animation-delay: 80ms; }
+  .rise-3 { animation-delay: 170ms; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    .rise { animation: none; opacity: 1; transform: none; }
+  }
 
   /* attribution kit */
 /* attribution-kit v1 — the maker's mark. Inherits `color` from wherever it sits (the mark is drawn in currentColor);
@@ -120,21 +241,28 @@
 <body>
 <div class="wrap">
 
-<header>
+<div class="hero">
+<header class="rise">
+  <p class="kicker">Event time versus processing time, watched live</p>
   <h1>flume</h1>
   <p class="tagline">
     Every event here carries two times: when it <em>happened</em>, and when it
     <em>arrived</em>. Windows close on a watermark over the first, never on a clock
-    over the second - and the picture below is what that difference looks like.
+    over the second.
   </p>
-  <p class="credit">
-    The watermark, the trigger, the allowed-lateness bound and the retracted pane
-    are the Dataflow model’s: Akidau et al., <em>The Dataflow Model</em>, VLDB 2015.
-    flume implements a small, single-process reading of those semantics so they can
-    be watched and checked. It is not Flink, not Beam, and not Kafka Streams.
-  </p>
+  <details class="credit">
+    <summary>Whose semantics these are, and what this is not</summary>
+    <p>
+      The watermark, the trigger, the allowed-lateness bound and the retracted pane
+      are the Dataflow model’s: Akidau et al., <em>The Dataflow Model</em>, VLDB 2015.
+      flume implements a small, single-process reading of those semantics so they can
+      be watched and checked. It is not Flink, not Beam, and not Kafka Streams.
+    </p>
+  </details>
 </header>
+</div>
 
+<div class="instrument rise rise-2">
 <form id="controls" autocomplete="off">
   <label>stream
     <select name="source">
@@ -173,19 +301,24 @@
   <label>seed<input name="seed" type="number" step="1"></label>
   <label>events<input name="events" type="number" min="10" step="10"></label>
 </form>
-<p class="small muted">
-  Every control is in the URL, so any view you reach is a link you can send. The
-  demo log pins its window size and allowed lateness - those two are what make
-  nineteen rows tell the story - but the policy, the termination and the
-  watermark strategy apply to every stream.
-  <strong>processing-time</strong> is one of the planted bugs, and it needs a
-  stream whose arrival rate diverges from its event rate before it does any
-  damage: switch to <em>generated, seeded</em> to watch it overshoot.
-</p>
 
 <div id="output" class="scroll">
   <p class="muted">Loading the engine…</p>
 </div>
+</div>
+
+<details class="credit rise rise-3" style="margin-top:14px">
+  <summary>How to drive it, and where the planted bug hides</summary>
+  <p>
+    Every control is in the URL, so any view you reach is a link you can send. The
+    demo log pins its window size and allowed lateness - those two are what make
+    nineteen rows tell the story - but the policy, the termination and the
+    watermark strategy apply to every stream.
+    <strong>processing-time</strong> is one of the planted bugs, and it needs a
+    stream whose arrival rate diverges from its event rate before it does any
+    damage: switch to <em>generated, seeded</em> to watch it overshoot.
+  </p>
+</details>
 
 <section>
   <h2>What the picture says</h2>
